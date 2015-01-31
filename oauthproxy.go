@@ -304,7 +304,7 @@ func (p *OauthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// default the redirect url to use the right host is it's missing
 	if p.redirectUrl.Host == "" {
-		p.redirectUrl.Host = req.Header.Get("Host")
+		p.redirectUrl.Host = req.Host
 
 		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
 	}
