@@ -46,6 +46,40 @@ type OauthProxy struct {
 	compiledRegex       []*regexp.Regexp
 }
 
+func ReverseProxy(target *url.URL) (proxy *httputil.ReverseProxy) {
+	proxy = httputil.NewSingleHostReverseProxy(target)
+	director := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		director(req)
+
+		req.Host = target.Host
+
+		log.Printf("setting host to %s", req.Host)
+		// // default the redirect url to use the right host is it's missing
+		// if p.redirectUrl.Host == "" {
+		// 	p.redirectUrl.Host = req.Host
+		//
+		// 	if p.redirectUrl.Scheme == "" {
+		// 		p.redirectUrl.Scheme = "https"
+		// 	}
+		//
+		// 	log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
+		// }
+	}
+
+	return proxy
+}
+
+// NewReverseProxy(target *url.URL) (proxy *httputil.ReverseProxy) {
+// +    proxy = httputil.NewSingleHostReverseProxy(target)
+// +    director := proxy.Director
+// +    proxy.Director = func(req *http.Request) {
+// +        director(req)
+// +        req.Host = target.Host
+// +    }
+// +    return proxy
+// +}
+
 func NewOauthProxy(opts *Options, validator func(string) bool) *OauthProxy {
 	login, _ := url.Parse("https://accounts.google.com/o/oauth2/auth")
 	redeem, _ := url.Parse("https://accounts.google.com/o/oauth2/token")
@@ -54,7 +88,8 @@ func NewOauthProxy(opts *Options, validator func(string) bool) *OauthProxy {
 		path := u.Path
 		u.Path = ""
 		log.Printf("mapping path %q => upstream %q", path, u)
-		serveMux.Handle(path, httputil.NewSingleHostReverseProxy(u))
+		// serveMux.Handle(path, httputil.NewSingleHostReverseProxy(u))
+		serveMux.Handle(path, ReverseProxy(u))
 	}
 	for _, u := range opts.CompiledRegex {
 		log.Printf("compiled skip-auth-regex => %q", u)
@@ -302,16 +337,16 @@ func (p *OauthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	log.Printf("%s %s %s", remoteAddr, req.Method, req.URL.RequestURI())
 
-	// default the redirect url to use the right host is it's missing
-	if p.redirectUrl.Host == "" {
-		p.redirectUrl.Host = req.Host
-
-		if p.redirectUrl.Scheme == "" {
-			p.redirectUrl.Scheme = "https"
-		}
-
-		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
-	}
+	// // default the redirect url to use the right host is it's missing
+	// if p.redirectUrl.Host == "" {
+	// 	p.redirectUrl.Host = req.Host
+	//
+	// 	if p.redirectUrl.Scheme == "" {
+	// 		p.redirectUrl.Scheme = "https"
+	// 	}
+	//
+	// 	log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
+	// }
 
 	var ok bool
 	var user string
