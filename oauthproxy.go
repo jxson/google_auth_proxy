@@ -93,9 +93,11 @@ func NewOauthProxy(opts *Options, validator func(string) bool) *OauthProxy {
 
 func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
 	redirectUrl := &url.URL{}
-	*redirectUrl = *p.redirectUrl
+	redirectUrl.Host = p.redirectUrl.Host
+	redirectUrl.Scheme = p.redirectUrl.Scheme
+	redirectUrl.Path = p.redirectUrl.Path
 
-	log.Printf("GetLoginURL with redirectUrl %s", redirectUrl.String())
+	log.Printf("GetLoginURL with redirectUrl %s", redirectUrl)
 
 	// default the redirect url to use the right host is it's missing
 	if redirectUrl.Host == "" {
@@ -105,7 +107,7 @@ func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
 			redirectUrl.Scheme = "https"
 		}
 
-		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
+		log.Printf("redirect_url not set, defaulting to %s", redirectUrl)
 	}
 
 	params := url.Values{}
