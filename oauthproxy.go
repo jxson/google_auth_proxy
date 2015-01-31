@@ -92,14 +92,14 @@ func NewOauthProxy(opts *Options, validator func(string) bool) *OauthProxy {
 }
 
 func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
-	redirectUrl := p.redirectUrl
+	redirectUrl := *p.redirectUrl
 
 	// default the redirect url to use the right host is it's missing
 	if redirectUrl.Host == "" {
 		redirectUrl.Host = req.Host
 
-		if p.redirectUrl.Scheme == "" {
-			p.redirectUrl.Scheme = "https"
+		if redirectUrl.Scheme == "" {
+			redirectUrl.Scheme = "https"
 		}
 
 		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
