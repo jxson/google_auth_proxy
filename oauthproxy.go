@@ -119,6 +119,9 @@ func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
 	if strings.HasPrefix(rd, "/") {
 		params.Add("state", rd)
 	}
+
+	log.Printf("params %s", params.Encode())
+
 	return fmt.Sprintf("%s?%s", p.oauthLoginUrl, params.Encode())
 }
 
