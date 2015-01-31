@@ -91,13 +91,13 @@ func NewOauthProxy(opts *Options, validator func(string) bool) *OauthProxy {
 	}
 }
 
-func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
+func (p *OauthProxy) GetRedirectURL(req *http.Request) string {
 	redirectUrl := &url.URL{}
 	redirectUrl.Host = p.redirectUrl.Host
 	redirectUrl.Scheme = p.redirectUrl.Scheme
 	redirectUrl.Path = p.redirectUrl.Path
 
-	log.Printf("GetLoginURL with redirectUrl %s", redirectUrl)
+	log.Printf("GetRedirectURL with redirectUrl %s", redirectUrl)
 
 	// default the redirect url to use the right host is it's missing
 	if redirectUrl.Host == "" {
@@ -110,18 +110,19 @@ func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
 		log.Printf("redirect_url not set, defaulting to %s", redirectUrl)
 	}
 
+	return redirectUrl.String()
+}
+
+func (p *OauthProxy) GetLoginURL(redirectUrl string, req *http.Request) string {
 	params := url.Values{}
-	params.Add("redirect_uri", redirectUrl.String())
+	params.Add("redirect_uri", p.GetRedirectURL(req))
 	params.Add("approval_prompt", "force")
 	params.Add("scope", p.oauthScope)
 	params.Add("client_id", p.clientID)
 	params.Add("response_type", "code")
-	if strings.HasPrefix(rd, "/") {
-		params.Add("state", rd)
+	if strings.HasPrefix(redirectUrl, "/") {
+		params.Add("state", redirectUrl)
 	}
-
-	log.Printf("params %s", params.Encode())
-
 	return fmt.Sprintf("%s?%s", p.oauthLoginUrl, params.Encode())
 }
 
@@ -151,12 +152,12 @@ func (p *OauthProxy) displayCustomLoginForm() bool {
 	return p.HtpasswdFile != nil && p.DisplayHtpasswdForm
 }
 
-func (p *OauthProxy) redeemCode(code string) (string, string, error) {
+func (p *OauthProxy) redeemCode(code string, req *http.Request) (string, string, error) {
 	if code == "" {
 		return "", "", errors.New("missing code")
 	}
 	params := url.Values{}
-	params.Add("redirect_uri", p.redirectUrl.String())
+	params.Add("redirect_uri", p.GetRedirectURL(req))
 	params.Add("client_id", p.clientID)
 	params.Add("client_secret", p.clientSecret)
 	params.Add("code", code)
@@ -380,7 +381,7 @@ func (p *OauthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		_, email, err := p.redeemCode(req.Form.Get("code"))
+		_, email, err := p.redeemCode(req.Form.Get("code"), req)
 		if err != nil {
 			log.Printf("%s error redeeming code %s", remoteAddr, err)
 			p.ErrorPage(rw, 500, "Internal Error", err.Error())
