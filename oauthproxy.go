@@ -309,6 +309,10 @@ func (p *OauthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
 	}
 
+	if p.redirectUrl.Scheme == "" {
+		p.redirectUrl.Scheme = "https"
+	}
+
 	var ok bool
 	var user string
 	var email string
