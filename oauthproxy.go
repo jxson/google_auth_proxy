@@ -92,11 +92,8 @@ func NewOauthProxy(opts *Options, validator func(string) bool) *OauthProxy {
 }
 
 func (p *OauthProxy) GetLoginURL(rd string, req *http.Request) string {
-	redirectUrl := &url.URL{
-		Host: p.redirectUrl.Host,
-		Scheme: p.redirectUrl.Scheme,
-		Path: p.redirectUrl.Path,
-	}
+	redirectUrl := &url.URL{}
+	*redirectUrl = *p.redirectUrl
 
 	log.Printf("GetLoginURL with redirectUrl %s", redirectUrl.String())
 
