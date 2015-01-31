@@ -299,7 +299,14 @@ func (p *OauthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if req.Header.Get("X-Real-IP") != "" {
 		remoteAddr += fmt.Sprintf(" (%q)", req.Header.Get("X-Real-IP"))
 	}
+
 	log.Printf("%s %s %s", remoteAddr, req.Method, req.URL.RequestURI())
+
+	// default the redirect url to use the right host is it's missing
+	if p.redirectUrl.Host == "" {
+		p.redirectUrl.Host = req.Host
+		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
+	}
 
 	var ok bool
 	var user string
