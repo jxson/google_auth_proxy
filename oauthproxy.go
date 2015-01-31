@@ -306,11 +306,11 @@ func (p *OauthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if p.redirectUrl.Host == "" {
 		p.redirectUrl.Host = req.Host
 
-		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
-	}
+		if p.redirectUrl.Scheme == "" {
+			p.redirectUrl.Scheme = "https"
+		}
 
-	if p.redirectUrl.Scheme == "" {
-		p.redirectUrl.Scheme = "https"
+		log.Printf("redirect_url not set, defaulting to %s", p.redirectUrl)
 	}
 
 	var ok bool
